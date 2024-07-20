@@ -15,6 +15,13 @@ const preguntasYRespuestas = [
     }
 ];
 
+const comentarios = [
+    "¡No te preocupes! ¡Puedes intentarlo de nuevo y mejorar tu puntaje!",
+    "¡Bien hecho! Tienes un conocimiento bueno sobre Naruto.",
+    "¡Increíble! ¡Eres un verdadero fan de Naruto!",
+    "¡Impresionante! ¡Eres un hokage!"
+];
+
 let score = 0;
 let evaluacion = "Este es tu resultado:\n";
 let i = 0;
@@ -32,7 +39,18 @@ while (i < preguntasYRespuestas.length) {
 }
 
 alert("Tu puntuación final es: " + score + " de 3.");
+
+let comentarioFinal;
+if (score === 0) {
+    comentarioFinal = comentarios[0];
+} else if (score === 1) {
+    comentarioFinal = comentarios[1];
+} else if (score === 2) {
+    comentarioFinal = comentarios[2];
+} else {
+    comentarioFinal = comentarios[3];
+}
+
 const despedida = "\nEspero que hayan disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.";
 
-alert(evaluacion + despedida);
-
+alert(evaluacion + comentarioFinal + despedida);
