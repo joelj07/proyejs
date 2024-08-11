@@ -1,20 +1,23 @@
-alert("Bienvenidos al Quiz de Naruto, donde pondremos tu conocimiento a prueba sobre el mejor anime de la historia. Escribe 'A', 'B' o 'C' con la respuesta correcta.");
-
+// Array que contiene las preguntas y las respuestas correctas
 const preguntasYRespuestas = [
     {
-        pregunta: "¿De qué color es el pelo de Naruto? \n A | Negro\n B | Verde\n C | Amarillo \n D | Morado",
+        pregunta: "¿De qué color es el pelo de Naruto?",
+        opciones: ["Negro", "Verde", "Amarillo", "Morado"],
         respuesta: "C"
     },
     {
-        pregunta: "¿Cuál es el apellido de Naruto? \n A | Uzumaki\n B | Uchiha\n C | Hyuga \n D | Nara",
+        pregunta: "¿Cuál es el apellido de Naruto?",
+        opciones: ["Uzumaki", "Uchiha", "Hyuga", "Nara"],
         respuesta: "A"
     },
     {
-        pregunta: "¿Cuál es la comida favorita de Naruto? \n A | Sushi\n B | Ramen\n C | Empanadas Tucumanas \n D | Queso de cabra",
+        pregunta: "¿Cuál es la comida favorita de Naruto?",
+        opciones: ["Sushi", "Ramen", "Empanadas Tucumanas", "Queso de cabra"],
         respuesta: "B"
     }
 ];
 
+// Array que contiene los comentarios finales según el puntaje
 const comentarios = [
     "¡No te preocupes! ¡Puedes intentarlo de nuevo y mejorar tu puntaje!",
     "¡Bien hecho! Tienes un conocimiento bueno sobre Naruto.",
@@ -22,22 +25,69 @@ const comentarios = [
     "¡Impresionante! ¡Eres un hokage!"
 ];
 
+// Variable para almacenar el puntaje
 let score = 0;
 
-function hacerPregunta(preguntaObj) {
-    let userAnswer = prompt(preguntaObj.pregunta).toUpperCase();
-    if (userAnswer === preguntaObj.respuesta) {
-        alert("¡Correcto!");
-        score++;
-        return `- Pregunta: ${preguntaObj.pregunta}\nRespuesta correcta: ${preguntaObj.respuesta}, ingresaste ${userAnswer}.\n`;
-    } else {
-        alert("Incorrecto :(");
-        return `- Pregunta: ${preguntaObj.pregunta}\nRespuesta correcta: ${preguntaObj.respuesta}, ingresaste ${userAnswer}.\n`;
-    }
+// Variable `store` para almacenar detalles del quiz
+let store = [];
+
+// Función que genera el HTML de las preguntas
+function mostrarPreguntas() {
+    const quizContainer = document.getElementById("quiz-container");
+    preguntasYRespuestas.forEach((preguntaObj, index) => {
+        const preguntaDiv = document.createElement("div");
+
+        // Crear título de la pregunta
+        const preguntaTitulo = document.createElement("h3");
+        preguntaTitulo.textContent = (index + 1) + ". " + preguntaObj.pregunta;
+        preguntaDiv.appendChild(preguntaTitulo);
+
+        // Crear opciones
+        preguntaObj.opciones.forEach((opcion, opcionIndex) => {
+            const label = document.createElement("label");
+            const radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "pregunta" + index;
+            radio.value = String.fromCharCode(65 + opcionIndex); // Convertir a 'A', 'B', etc.
+            label.appendChild(radio);
+            label.appendChild(document.createTextNode(opcion));
+            preguntaDiv.appendChild(label);
+            preguntaDiv.appendChild(document.createElement("br"));
+        });
+
+        quizContainer.appendChild(preguntaDiv);
+    });
 }
 
-function mostrarResultado(score) {
-    alert("Tu puntuación final es: " + score + " de 3.");
+// Función que calcula el puntaje y muestra el resultado
+function calcularResultado() {
+    preguntasYRespuestas.forEach((preguntaObj, index) => {
+        const userAnswer = document.querySelector(`input[name="pregunta${index}"]:checked`);
+        if (userAnswer && userAnswer.value === preguntaObj.respuesta) {
+            score++;
+            store.push({
+                pregunta: preguntaObj.pregunta,
+                respuestaCorrecta: preguntaObj.respuesta,
+                respuestaUsuario: userAnswer.value,
+                correcta: true
+            });
+        } else {
+            store.push({
+                pregunta: preguntaObj.pregunta,
+                respuestaCorrecta: preguntaObj.respuesta,
+                respuestaUsuario: userAnswer ? userAnswer.value : "No respondida",
+                correcta: false
+            });
+        }
+    });
+
+    mostrarResultado();
+}
+
+// Función que muestra el resultado final y el comentario basado en el puntaje
+function mostrarResultado() {
+    const resultContainer = document.getElementById("result-container");
+    resultContainer.innerHTML = `<h2>Tu puntuación final es: ${score} de 3.</h2>`;
 
     let comentarioFinal;
     if (score === 0) {
@@ -50,15 +100,18 @@ function mostrarResultado(score) {
         comentarioFinal = comentarios[3];
     }
 
-    const despedida = "\nEspero que hayan disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.";
-    return comentarioFinal + despedida;
+    const evaluacion = document.createElement("p");
+    store.forEach(item => {
+        evaluacion.innerHTML += `- Pregunta: ${item.pregunta}<br>   Respuesta correcta: ${item.respuestaCorrecta}, ingresaste ${item.respuestaUsuario}.<br>   Correcta: ${item.correcta ? "Sí" : "No"}<br><br>`;
+    });
+
+    evaluacion.innerHTML += `<p>${comentarioFinal}</p>`;
+    evaluacion.innerHTML += `<p>Espero que hayan disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.</p>`;
+    resultContainer.appendChild(evaluacion);
 }
 
-let evaluacion = "Este es tu resultado:\n";
+// Mostrar las preguntas cuando se carga la página
+mostrarPreguntas();
 
-preguntasYRespuestas.forEach(preguntaObj => {
-    evaluacion += hacerPregunta(preguntaObj);
-});
-
-alert(evaluacion + mostrarResultado(score));
-
+// Agregar evento al botón para calcular el resultado
+document.getElementById("submit-button").addEventListener("click", calcularResultado);
