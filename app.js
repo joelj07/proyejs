@@ -23,34 +23,42 @@ const comentarios = [
 ];
 
 let score = 0;
-let evaluacion = "Este es tu resultado:\n";
-let i = 0;
 
-while (i < preguntasYRespuestas.length) {
-    let userAnswer = prompt(preguntasYRespuestas[i].pregunta).toUpperCase();
-    if (userAnswer === preguntasYRespuestas[i].respuesta) {
+function hacerPregunta(preguntaObj) {
+    let userAnswer = prompt(preguntaObj.pregunta).toUpperCase();
+    if (userAnswer === preguntaObj.respuesta) {
         alert("¡Correcto!");
         score++;
+        return `- Pregunta: ${preguntaObj.pregunta}\nRespuesta correcta: ${preguntaObj.respuesta}, ingresaste ${userAnswer}.\n`;
     } else {
         alert("Incorrecto :(");
+        return `- Pregunta: ${preguntaObj.pregunta}\nRespuesta correcta: ${preguntaObj.respuesta}, ingresaste ${userAnswer}.\n`;
     }
-    evaluacion += `- Pregunta ${i + 1}: ${preguntasYRespuestas[i].respuesta}, ingresaste ${userAnswer}.\n`;
-    i++;
 }
 
-alert("Tu puntuación final es: " + score + " de 3.");
+function mostrarResultado(score) {
+    alert("Tu puntuación final es: " + score + " de 3.");
 
-let comentarioFinal;
-if (score === 0) {
-    comentarioFinal = comentarios[0];
-} else if (score === 1) {
-    comentarioFinal = comentarios[1];
-} else if (score === 2) {
-    comentarioFinal = comentarios[2];
-} else {
-    comentarioFinal = comentarios[3];
+    let comentarioFinal;
+    if (score === 0) {
+        comentarioFinal = comentarios[0];
+    } else if (score === 1) {
+        comentarioFinal = comentarios[1];
+    } else if (score === 2) {
+        comentarioFinal = comentarios[2];
+    } else {
+        comentarioFinal = comentarios[3];
+    }
+
+    const despedida = "\nEspero que hayan disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.";
+    return comentarioFinal + despedida;
 }
 
-const despedida = "\nEspero que hayan disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.";
+let evaluacion = "Este es tu resultado:\n";
 
-alert(evaluacion + comentarioFinal + despedida);
+preguntasYRespuestas.forEach(preguntaObj => {
+    evaluacion += hacerPregunta(preguntaObj);
+});
+
+alert(evaluacion + mostrarResultado(score));
+
