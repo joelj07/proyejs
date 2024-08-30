@@ -1,4 +1,3 @@
-// Objeto para manejar todo el quiz
 const quizApp = {
     preguntasYRespuestas: [], // Inicialmente vacío, cargaremos las preguntas desde un JSON externo
     comentarios: [
@@ -11,97 +10,92 @@ const quizApp = {
     store: [], // Almacén de respuestas
 
     // Función para cargar las preguntas y respuestas desde un JSON externo
-    // Función para cargar las preguntas y respuestas desde un JSON externo
-cargarPreguntas: async function() {
-    try {
-        // AQUÍ ESTÁ LO QUE ME PIDES
-        // Intentamos obtener los datos de preguntas desde un archivo JSON externo
-        const response = await fetch('./info.json');
-
-        // Verificamos si la respuesta es correcta
-        if (!response.ok) {
-            this.mostrarMensaje(`Error en la solicitud: ${response.status}`);
-            return;
+    cargarPreguntas: async function() {
+        try {
+            const response = await fetch('./info.json');
+            if (!response.ok) {
+                this.mostrarMensaje(`Error en la solicitud: ${response.status}`);
+                return;
+            }
+            const data = await response.json();
+            this.preguntasYRespuestas = data;
+            this.mostrarPreguntas(); // Llamada a la nueva función mostrarPreguntas
+        } catch (error) {
+            this.mostrarMensaje('Ocurrió un error al cargar las preguntas: ' + error.message);
         }
+    },
 
-        // Convertimos la respuesta a formato JSON
-        const data = await response.json();
-
-        // Guardamos las preguntas y respuestas obtenidas
-        this.preguntasYRespuestas = data;  // Cambiado para asignar directamente `data`
-        
-        // Mostrar las preguntas después de cargarlas
-        this.mostrarPreguntas();
-
-    } catch (error) {
-        // Capturamos cualquier error que ocurra durante `fetch` o el manejo de la respuesta
-        this.mostrarMensaje('Ocurrió un error al cargar las preguntas: ' + error.message);
-    }
-},
-
-
-    // Función para mostrar las preguntas
-    // Función para mostrar las preguntas
+    // Función para mostrar las preguntas con SweetAlert y deshabilitar opciones después de seleccionar
     mostrarPreguntas: function() {
-    const quizContainer = document.getElementById("quiz-container");
-    quizContainer.innerHTML = ""; // Limpiar cualquier contenido previo
-    this.preguntasYRespuestas.forEach((preguntaObj, index) => {
-        const preguntaDiv = document.createElement("div");
+        const quizContainer = document.getElementById("quiz-container");
+        quizContainer.innerHTML = ""; // Limpiar cualquier contenido previo
+        this.preguntasYRespuestas.forEach((ele, index) => {
+            const div = document.createElement("div");
+            const h3 = document.createElement("h3");
+            const ul = document.createElement("ul");
 
-        // Crear título de la pregunta
-        const preguntaTitulo = document.createElement("h3");
-        preguntaTitulo.textContent = (index + 1) + ". " + preguntaObj.pregunta;
-        preguntaDiv.appendChild(preguntaTitulo);
+            h3.innerText = ele.pregunta;
+            ele.opciones.forEach((e, opcionIndex) => {
+                const li = document.createElement("li");
+                li.innerText = e;
+                li.dataset.index = index; // Guardar el índice de la pregunta
+                li.dataset.opcionIndex = opcionIndex; // Guardar el índice de la opción
 
-        // Crear opciones
-        preguntaObj.opciones.forEach((opcion, opcionIndex) => {
-            const label = document.createElement("label");
-            const radio = document.createElement("input");
-            radio.type = "radio";
-            radio.name = "pregunta" + index;
-            radio.value = opcionIndex.toString(); // Asignamos el índice como valor
-            label.appendChild(radio);
-            label.appendChild(document.createTextNode(opcion));
-            preguntaDiv.appendChild(label);
-            preguntaDiv.appendChild(document.createElement("br"));
+                li.addEventListener("click", () => {
+                    Swal.fire({
+                        title: opcionIndex === ele.respuesta ? "Correcto" : "Equivocado",
+                        text: `La respuesta correcta es ${ele.opciones[ele.respuesta]}`,
+                        icon: opcionIndex === ele.respuesta ? "success" : "error"
+                    }).then(() => {
+                        const opciones = ul.querySelectorAll("li");
+                        opciones.forEach(opcion => {
+                            opcion.style.pointerEvents = "none"; // Deshabilitar clics adicionales
+                            opcion.style.opacity = "0.6"; // Cambiar apariencia para indicar que está deshabilitado
+                        });
+
+                        // Guardar la respuesta del usuario
+                        this.store[index] = opcionIndex;
+                    });
+                });
+
+                ul.appendChild(li);
+            });
+            div.appendChild(h3);
+            div.appendChild(ul);
+            quizContainer.appendChild(div);
         });
+    },
 
-        quizContainer.appendChild(preguntaDiv);
-    });
-}
-,
-
-    // Función para calcular el resultado
+    // Función para calcular el resultado del quiz
     calcularResultado: function() {
-        this.score = 0; // Reiniciar el puntaje cada vez que se calcula el resultado
-        this.store = []; // Reiniciar las respuestas almacenadas
-    
+        this.score = 0;
+
         this.preguntasYRespuestas.forEach((preguntaObj, index) => {
-            const userAnswer = document.querySelector(`input[name="pregunta${index}"]:checked`);
-            if (userAnswer && parseInt(userAnswer.value) === preguntaObj.respuesta) {
+            const respuestaUsuario = this.store[index];
+
+            if (respuestaUsuario === preguntaObj.respuesta) {
                 this.score++;
-                this.store.push({
+                this.store[index] = {
                     pregunta: preguntaObj.pregunta,
                     respuestaCorrecta: preguntaObj.respuesta,
-                    respuestaUsuario: userAnswer.value,
+                    respuestaUsuario: respuestaUsuario,
                     correcta: true
-                });
+                };
             } else {
-                this.store.push({
+                this.store[index] = {
                     pregunta: preguntaObj.pregunta,
                     respuestaCorrecta: preguntaObj.respuesta,
-                    respuestaUsuario: userAnswer ? userAnswer.value : "No respondida",
+                    respuestaUsuario: respuestaUsuario !== undefined ? respuestaUsuario : "No respondida",
                     correcta: false
-                });
+                };
             }
         });
-    
+
         localStorage.setItem('quizScore', this.score);
         localStorage.setItem('quizStore', JSON.stringify(this.store));
-    
+
         this.mostrarResultado();
-    }
-    ,
+    },
 
     // Función para mostrar el resultado final
     mostrarResultado: function() {
@@ -121,17 +115,18 @@ cargarPreguntas: async function() {
 
         const evaluacion = document.createElement("p");
         this.store.forEach(item => {
-            evaluacion.innerHTML += `- Pregunta: ${item.pregunta}<br>   Respuesta correcta: ${item.respuestaCorrecta}, ingresaste ${item.respuestaUsuario}.<br>   Correcta: ${item.correcta ? "Sí" : "No"}<br><br>`;
+            if (typeof item === 'object') {
+                evaluacion.innerHTML += `- Pregunta: ${item.pregunta}<br>   Respuesta correcta: ${item.respuestaCorrecta}, ingresaste ${item.respuestaUsuario}.<br>   Correcta: ${item.correcta ? "Sí" : "No"}<br><br>`;
+            }
         });
 
         evaluacion.innerHTML += `<p>${comentarioFinal}</p>`;
-        evaluacion.innerHTML += `<p>Espero que hayan disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.</p>`;
+        evaluacion.innerHTML += `<p>Espero que hayas disfrutado de estas preguntas del Quiz de Naruto, te esperamos de vuelta.</p>`;
         resultContainer.appendChild(evaluacion);
     },
 
     // Función para cargar los datos del storage al iniciar el quiz
     cargarDatosStorage: function() {
-        // Aquí está el storage: Cargar el puntaje y respuestas desde localStorage
         const storedScore = localStorage.getItem('quizScore');
         const storedStore = localStorage.getItem('quizStore');
         if (storedScore && storedStore) {
@@ -148,8 +143,8 @@ cargarPreguntas: async function() {
 
     // Inicializar el quiz
     iniciarQuiz: function() {
-        this.cargarDatosStorage(); // Cargar datos guardados del storage
-        this.cargarPreguntas(); // Cargar preguntas desde el JSON externo
+        this.cargarDatosStorage();
+        this.cargarPreguntas();
         document.getElementById("submit-button").addEventListener("click", () => this.calcularResultado());
     }
 };
